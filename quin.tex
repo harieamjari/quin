@@ -1,0 +1,945 @@
+\documentclass{article}
+\usepackage[T1]{fontenc}
+%\usepackage[utf8]{inputenc}
+\usepackage{ltablex}
+\usepackage{pdflscape}
+\usepackage{array}
+\usepackage{algpseudocode}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{ltablex}
+\usepackage{fancyvrb}
+\usepackage{alphabeta}
+
+\usepackage{newunicodechar}
+\usepackage[greek, english]{babel}
+\usepackage[table]{xcolor} 
+\makeatletter
+\renewcommand\verbatim@font{\normalfont\fontencoding{T1}\ttfamily}
+\makeatother
+%\newunicodechar{Λ}{$\Lambda$}
+%\newunicodechar{Ψ}{$\Psi$}
+%\newunicodechar{Ξ}{$\Xi$}
+%\newunicodechar{Φ}{$\Phi$}
+%\newunicodechar{Δ}{$\Delta$}
+%\newunicodechar{Σ}{\textgreek{Σ}}
+%\newunicodechar{Γ}{\ensuremath{\Gamma}}
+%\newunicodechar{Π}{\ensuremath{\Pi}}
+
+
+%\newunicodechar{Λ}{\textgreek{Λ}}
+%\newunicodechar{Ψ}{$\Psi$}
+%\newunicodechar{Ξ}{$\Xi$}
+%\newunicodechar{Φ}{$\Phi$}
+%\newunicodechar{Δ}{$\Delta$}
+%\newunicodechar{Σ}{\textgreek{Σ}}
+%\newunicodechar{Γ}{\ensuremath{\Gamma}}
+%\newunicodechar{Π}{\ensuremath{\Pi}}
+
+\title{A quinary cipher for SMS encryption}
+\author{\href{https://github.com/harieamjari}{Al-buharie}}
+
+
+\begin{document}
+\maketitle
+
+\section*{Preface}
+
+The previous year, I watched Veritasium's video about vulnerabilities
+in our phone system where they briefly performed a demonstration of
+an   SS7 attack and redirected an SMS message away from the intended
+recipient. What suprise me the most was the lack of encryption and
+they were able to read the message in its plaintext form as is. Several
+months from that, and almost completely forgetting about it, I worked
+on a (draft) research about remote access via SMS where I needed some kind
+cryptographic functionality to address this insecure communication
+channel. The result of that was a quinary cipher. Recognizing this can
+be used for other purposes,
+I decided to write a separate article about it.
+
+I place a big disclaimer first, the ciphers I described within this
+article are insecure and are not meant for public use. These are for
+demonstrative purposes only and more of a "hack" than a real solution
+to address SMS security for the public, but hey, this fit perfectly on
+\textit{Hacker} News.
+
+I've done great simplification and elided some of the mathematical
+concepts to keep it simple and short, so if you want to dig further,
+you can look up abstract algebra and finite fields where much of this
+article spent explaining.
+
+\medskip
+
+With that said, it's time to transcend beyond binary.
+
+\newpage
+
+\begin{Verbatim}[fontsize=\small]
+223 433 224 410 043 131 402 420 142 102 121 214 013 132 413  WÜpÇ§)6ÅG3¤kPBT
+413 104 210 211 030 020 444 032 243 414 404 044 422 002 443  Teì åñöAamhx¡2c
+432 121 314 341 134 214 343 243 403 040 132 322 413 444 441  E¤l0tkbaOΛB?Tö1
+320 334 412 024 120 340 032 404 203 202 442 023 233 222 343  üv;nØΨAhM4JUÖ>b
+423 344 334 022 443 241 302 030 104 024 431 120 344 011 431  Yäv<c/5åen,Øäß,
+324 401 214 042 201 243 233 333 423 300 322 403 021 334 042  qækFàaÖÑY¥?O#vF
+141 134 233 134 244 412 024 043 113 131 340 322 331 444 202  .tÖtz;n§Q)Ψ?+ö4
+123 302 030 043 443 234 403 114 132 114 442 114 212 400 223  V5å§cuOjBjJj9èW
+403 141 141 324 320 030 244 101 142 410 131 134 442 434 224  O..qüåzΞGÇ)tJwp
+213 242 333 042 420 134 421 330 201 343 134 322 402 310 023  RHÑFÅt'Φàbt?6òU
+412 130 121 124 223 220 241 423 204 333 000 300 211 420 204  ;Δ¤oWø/YfÑ@¥ Åf
+214 141 231 022 410 403 421 012 412 030 421 244 034 214 121  k.*<ÇO'7;å'zsk¤
+303 031 404 242 203 414 440 231 104 101 421 410 440 304 311  N(hHMmΣ*eΞ'ÇΣg!
+312 420 421 014 232 210 042 103 023 313 021 432 031 413 330  :Å'iCìFLUS#E(TΦ
+031 242 042 101 423 221 004 210 302 331 302 143 203 141 333  (HFΞY%dì5+5¿M.Ñ
+444 430 142 030 123 034 404 211 214 432 322 132 341 003 330  öΓGåVsh kE?B0KΦ
+044 443 014 203 012 303 440 421 121 443 232 213 234 100 333  xciM7NΣ'¤cCRu£Ñ
+440 200 244 240 332 442 143 332 341 343 010 144 344 104 230  Σ$zΠDJ¿D0béyäe_
+044 020 024 424 033 244 214 333 234 134 301 014 434 410 423  xñnrZzkÑutÆiwÇY
+440 213 440 212 434 031 220 223 002 112 122 024 414 130 244  ΣRΣ9w(øW28=nmΔz
+212 404 013 431 231 034 024 442 442 313 333 411 404 030 120  9hP,*snJJSÑ"håØ
+021 240 401 343 123 103 402 444 244 231 333 341 140 403 012  #ΠæbVL6öz*Ñ0ΩO7
+111 313 102 314 331 103 041 404 240 224 441 411 143 301 104  ÉS3l+L-hΠp1"¿Æe
+234 014 034 141 421 241 201 010 011 124 010 300 122 402 211  uis.'/àéßoé¥=6
+300 023 234 004 104 043 223 231 414 010 330 321 004 123 120  ¥Uude§W*méΦ&dVØ
+030 002 323 400 410 404 322 323 141 401 033 032 100 412 312  å2XèÇh?X.æZA£;:
+112 244 344 020 010 333 133 442 130 441 411 430 244 302 034  8zäñéÑÄJΔ1"Γz5s
+234 102 103 312 044 114 210 214 300 141 212 302 032 002 304  u3L:xjìk¥.95A2g
+241 343 434 241 242 042 323 441 022 111 242 444 211 322 331  /bw/HFX1<ÉHö ?+
+301 201 124 014 131 123 330 424 010 114 003 030 413 010 132  Æàoi)VΦréjKåTéB
+144 314 224 131 432 400 034 202 222 312 213 430 020 112 311  ylp)Eès4>:RΓñ8!
+341 003 203 003 100 114 101 000 130 134 100 134 044 444 130  0KMK£jΞ@Δt£txöΔ
+034 100 320 300 310 011 410 100 013 013 410 013 404 444 413  s£ü¥òßÇ£PPÇPhöT
+444 221 420 300 012 213 440 300 230 000 033 424 311 133 143  ö%Å¥7RΣ¥_@Zr!Ä¿
+430 233 030 300 032 433 143 320 202 204 240 210 402 302 011  ΓÖå¥AÜ¿ü4fΠì65ß
+320 140 134 120 010 112 412 412 433 123 303 312 032 113 100  üΩtØé8;;ÜVN:AQ£
+032 014 013 412 001 011 241 241 243 312 330 331 203 211 310  AiP;Θß//a:Φ+M ò
+003 201 401 341 200 101 124 124 124 331 233 033 120 321 131  Kàæ0$Ξooo+ÖZØ&)
+332 442 421 224 132 434 210 042 320 331 002 144 304 410 012  DJ'pBwìFü+2ygÇ7
+142 433 304 302 432 031 122 214 003 334 413 341 414 202 304  GÜg5E(=kKvT0m4g
+232 121 004 340 231 334 014 141 042 430 012 043 104 042 331  C¤dΨ*vi.FΓ7§eF+
+300 334 431 024 030 002 004 044 012 141 430 040 302 332 132  ¥v,nå2dx7.ΓΛ5DB
+144 222 000 332 422 343 401 114 222 010 401 131 014 044 011  y>@D¡bæj>éæ)ixß
+341 044 031 123 204 103 443 241 330 104 424 404 143 332 300  0x(VfLc/Φerh¿D¥
+034 104 403 112 320 410 344 324 133 010 442 440 414 333 230  seO8üÇäqÄéJΣmÑ_
+003 410 440 311 232 041 034 432 413 301 044 244 041 433 323  KÇΣ!C-sETÆxz-ÜX
+441 102 432 301 104 411 402 233 420 034 341 342 420 332 034  13EÆe"6ÖÅs0IÅDs
+212 043 412 140 103 022 042 143 434 100 000 343 200 100 304  9§;ΩL<F¿w£@b$£g
+244 132 010 124 003 433 101 134 430 012 121 243 333 132 131  zBéoKÜΞtΓ7¤aÑB)
+301 030 032 102 412 212 413 243 301 404 141 410 320 241 112  ÆåA3;9TaÆh.Çü/8
+\end{Verbatim}
+
+\newpage
+
+
+\section{Introduction}
+
+When writing a SMS text message, we usually use a limited
+set of prededined characters. These set of allowable characters in
+a standard SMS text message are defined in 3GPP TS
+23.038. By default, if you use the GSM 7-bit default character
+set, in theory, you can fit about 140 bytes or 160 characters in a single
+SMS message but you can't actually make use of everything  because some
+are control characters and are not meant to be displayed.
+
+\medskip
+
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\hline
+              & \verb+0x00+ & \verb+0x10+ & \verb+0x20+ & \verb+0x30+ & \verb+0x40+ & \verb+0x50+ & \verb+0x60+ & \verb+0x70+ \\
+\hline
+  \verb+0x00+ & @ & $\Delta$ & \verb+SP+ & 0 & ¡ & P & ¿ & p  \\
+\hline
+  \verb+0x01+ & £ & \_ & ! & 1 & A & Q & a & q  \\
+\hline
+  \verb+0x02+ & \$ & $\Phi$ & " & 2 & B & R & b & r  \\
+\hline
+  \verb+0x03+ & ¥ & $\Gamma$ & \# & 3 & C & S & c & s  \\
+\hline
+  \verb+0x04+ & è & $\Lambda$ & ¤ & 4 & D & T & d & t  \\
+\hline
+  \verb+0x05+ & é & $\Omega$ & \% & 5 & E & U & e & u  \\
+\hline
+  \verb+0x06+ & ù & $\Pi$ & \& & 6 & F & V & f & v  \\
+\hline
+  \verb+0x07+ & ì & $\Psi$ & \textquotesingle & 7 & G & W & g & w  \\
+\hline
+  \verb+0x08+ & ò & $\Sigma$ & ( & 8 & H & X & h & x  \\
+\hline
+  \verb+0x09+ & Ç & $\Theta$ & ) & 9 & I & Y & i & y  \\
+\hline
+  \verb+0x0A+ & \verb+LF+ & $\Xi$ & * & : & J & Z & j & z  \\
+\hline
+  \verb+0x0B+ & Ø & \verb+ESC+ & + & ; & K & Ä & k & ä  \\
+\hline
+  \verb+0x0C+ & ø & Æ & , & < & L & Ö & l & ö  \\
+\hline
+  \verb+0x0D+ & \verb+CR+ & æ & - & = & M & Ñ & m & ñ  \\
+\hline
+  \verb+0x0E+ & Å & ß & . & > & N & Ü & n & ü  \\
+\hline
+  \verb+0x0F+ & å & É & / & ? & O & § & o & à \\
+\hline
+\end{tabular}%
+
+\medskip
+
+\begin{itemize}
+  \item[] \verb+SP+ represents the space character.
+  \item[] \verb+CR+ represents the carriage return character.
+  \item[] \verb+LF+ represents the line feed character.
+  \item[] \verb+ESC+ represents the escape character\footnote{An escape extension to other tables. See 3GPP TS 23.038.}
+
+%\footnote{An escape extension to other tables, either the national language single shift table (if specified in the TP-UDH), or the GSM 7 bit default alphabet extension table. See 3GPP TS 23.038..}
+\end{itemize}
+
+See, SMS has a feature called, 
+"single shift mechanism" which allows you to incorporate additional
+characters (from the GSM 7-bit default alphabet extension table in our case) using the format
+\verb+ESC<CHARACTER>+.
+Unfortunately, if the receiving entity does not understand this escape mechanism,
+the standard requires it be displayed as a space character and since the default extension table is not
+fully populated and not all character has a representation when escaped,
+we will be bound to run on these problems of spaces on our message. Not only that, it would be illegal to place \verb+ESC+ at the end of an SMS message without a following character.
+
+We can however limit ourselves to a specific 125 characters from the default character set by excluding \verb+ESC+, \verb+CR+ and \verb+LF+;\footnote{We can choose other combination of \texttt{ESC}, \texttt{CR}, \texttt{SP} and \texttt{LF} as long as both the handset and network makes no modification to
+these characters.}
+it just so happens that 125 is a prime power of 5, perfect for creating a finite field. I will
+shortly discuss this later.
+
+
+\section{Basic One Time Pad (OTP)}
+
+First, I wish to establish that "quin" (from the word "quinary") is a unit
+of data that can represent either 0, 1, 2, 3, or 4; the same idea as "bit" which
+can represent 0 or 1.
+
+In binary, we usually perform a OTP using an XOR operation which happens to be equivalent
+to modulus 2 arithmetic.
+
+\medskip
+
+\begin{table}[!hp]
+\centering
+\begin{tabular}{c|cc}
+  $+$ & 0 & 1 \\
+  \hline
+  0 & 0 & 1 \\
+  1 & 1 & 0 \\
+\end{tabular}
+  \caption{Addition table mod 2}
+\end{table}
+
+\medskip
+
+This is basically a commutative group. Notice in the bottom-right quadrant, each elements occurs
+only once for each rows and columns specially the identity element 0. This
+allows us to be able to take an inverse and decrypt whatever ciphertext we
+have. 1 is inverse of 1 and 0 is the inverse of 0. If we add 1 (plaintext)
+and 1 (key), we get 0 (ciphertext). To decrypt it, we add the inverse
+of our key which is 1 and we're back again to our plaintext 1.
+
+%\clearpage
+
+For our quinary OTP, we will be taking the same idea but modulus 5 instead.
+
+\begin{table}[!hp]
+\centering
+  \begin{tabular}{c|ccccc}
+  $+$ & 0 & 1 & 2 & 3 & 4\\
+  \hline
+  0 & \cellcolor{yellow!50}0 & 1 & 2 & 3 & 4 \\
+  1 & 1 & 2 & 3 & 4 & \cellcolor{yellow!50}0\\
+  2 & 2 & 3 & 4 & \cellcolor{yellow!50}0 & 1 \\
+  3 & 3 & 4 & \cellcolor{yellow!50}0 & 1 & 2 \\
+  4 & 4 & \cellcolor{yellow!50}0 & 1 & 2 & 3 \\
+\end{tabular}
+  \caption{Addition table mod 5}
+\end{table}
+
+
+This is also a commutative group where elements occur once
+for each rows and
+columns. I've colored the additive identity with yellow to
+make it more visible.
+
+If we add  4 and 2, we get 1.
+
+
+\[ 4 + 2 = 1 \pmod 5 \]
+
+If we add to both sides the inverse of 2 which is 3, we're back to
+4.
+\[ 4 = 4\pmod 5 \]
+
+I hate to dig in further with the formal mathematics but you have
+to remember that, kind of like numbers, you can add and subtract using these 5 elements
+to end up with also one of those 5 element. And if you use 3 quins, you'd be able to represent
+the 125 characters where the operation, \( + \), is performed component wise.
+
+\[ (a_0,a_1,a_2) + (b_0,b_1,b_2) = (a_0+b_0,a_1+b_1,a_2+b_2)\]
+
+Thus, $012+341 = 303$.
+
+\subsection{Exercise}
+
+Here is a OTP encrypted ciphertext. As an excercise, try decrypting it.\footnote{HINT: First convert both the Ciphertext and Key to it's quinary representation according to the table in the appendix. Then compute
+the inverse of the key and add it to the ciphertext. Once you've
+converted the result back to it's character representation, you shall have
+your decrypted message}
+
+\medskip
+
+Ciphertext: \textquotesingle§EÆ\_SñBùpä
+
+Key: uöVFÉ35P/Ç$\Psi$
+
+
+\section{Finite fields}
+
+In mathematics, you're probably used to dealing with inifinitely number of
+numbers. The set which contain these infinitely many numbers is the
+set $\mathbb{R}$ and this includes 0, 1, 1.2, -45.34, 82, 2839, 0.5, $\pi$, $e$
+and much more, but dealing with mathematics doesn't necessarily mean
+we are limited to these numbers to do computation and
+arithmetic with. In fact you can do arithmetic with a finite set of numbers (or elements) and all rules of basic algebra will also apply. These rules are called
+the field axioms:
+
+\textbf{Field definition:} For a set \(F\) with two binary operations, \(+\) and \(\cdot\), to be a field, the following axioms must be satisfied for all elements \(a,b,c\in F\).
+
+\begin{itemize}
+    \item \textbf{Closure:} $a+b \in F$ and $a\cdot b \in F$.
+    \item \textbf{Associativity:} $a+(b+c) = (a+b)+c$ and $a\cdot (b\cdot c) = (a\cdot b)\cdot c$.
+    \item \textbf{Commutativity:} $a+b = b+a$ and $a\cdot b = b\cdot a$.
+    \item \textbf{Distributivity:} $a\cdot (b +c) = a\cdot b + a\cdot c$.
+    \item \textbf{Identity:} $\exists 0 \in F$ such that $a+0=a$ and $\exists 1 \in F$ such that $a\cdot 1=a$.
+    \item \textbf{Inverse:} $\exists(-a),\in F$ such that $a+(-a) = 0$ and $\exists a^{-1}\in F, a \neq 0$ such that $a\cdot a^{-1} = 1$.
+\end{itemize}
+
+For example, the integers modulo 5 ($\mathbb{F}_5 = \{ 0, 1, 2, 3, 4 \}$)
+is a field under addition and multiplication. 5 being a prime number
+guarantees that multuplication of two non zero numbers is also not
+zero. 
+
+\begin{table}[!hp]
+\centering
+  \begin{tabular}{c|ccccc}
+  $\cdot$ & 0 & 1 & 2 & 3 & 4\\
+  \hline
+  0 & 0 & 0 & 0 & 0 & 0 \\
+  1 & 0 & \cellcolor{yellow!50}1 & 2 & 3 & 4\\
+  2 & 0 & 2 & 4 & \cellcolor{yellow!50}1 & 3 \\
+  3 & 0 & 3 & \cellcolor{yellow!50}1 & 4 & 2 \\
+  4 & 0 & 4 & 3 & 2 & \cellcolor{yellow!50}1 \\
+\end{tabular}
+  \caption{Multiplication table mod 5}
+\end{table}
+
+But this would not be enough to represent all of the 125
+characters. We have to use three quins instead.  There's a weird way of
+mathematicians representing this and that they use polynomials. For our case, we'll
+be using a 2nd degree polymomial with coefficients
+in $F_5$:
+
+\[ a_0 + a_1 x + a_2 x^2, a_n \in F_5 \]
+
+To add two polynomials, group like-terms and add the coefficients mod 5.
+
+\[ (a_0 + a_1 x + a_2 x^2) + (b_0 + b_1 x + b_2 x^2) = (a_0+b_0) + (a_1 + b_1)x + (a_2 + b_2)x^2 \]
+
+And we can multiply two polynomials the way we already know:
+
+\begin{align*}
+  & (a_0 + a_1 x + a_2 x^2) (b_0 + b_1 x + b_2 x^2) \\
+=& a_0(b_0 + b_1 x + b_2 x^2) + \\
+  &  a_1 x(b_0 + b_1 x + b_2 x^2) + \\
+   & a_2 x^2(b_0 + b_1 x + b_2 x^2) \\
+=& a_0 b_0 + a_0 b_1 x + a_0 b_2 x^2 + \\
+  & a_1 b_0 x + a_1 b_1 x^2 + a_1 b_2 x^3 + \\
+  & a_2 b_0 x^2 + a_2 b_1 x^3 + a_2 b_2 x^4 \\
+=& a_0 b_0 + \\ 
+  & (a_0 b_1 + a_1 b_0) x + \\
+  & (a_0 b_2 + a_1 b_1 + a_2 b_0)x^2 + \\
+  & (a_1 b_2 + a_2 b_1) x^3 + \\
+  & a_2 b_2 x^4
+\end{align*}
+
+Yikes, but this doesn't satisfy our properties of \textbf{Closure}. The
+problem was that the multiplication of two 2 degrees polynomials resulted
+into a 4th degree polynomial instead of another 2 degree polynomial. To
+solve this we'll have to reduce it by dividing it with a 3rd degree
+polynomial and taking the remainder as the result. But not just any
+polynomial, a monic irreducible polynomial; if you choose the wrong one,
+you won't have a system that satisfies the field axioms and all things
+get awry.
+
+Previously, we choose a prime number, 5, which can't have factors, as
+the modulus to create a field with 5 elements. The reason stays the same
+for choosing an irreducible polynomial (which also can't have factors)
+for reducing our 4th degree polynomial.
+
+It might be easy to show what what is reducible instead. For example, $x^2
++ 1$ is reducible in the set of polynomials with coefficient in $F_5$
+(aka $F_5[x]$) because it can be factored to $(x+2)(x+3)$.  $x^3 +
+2x^2 + 2x + 4$ is reducible in $F_5[x]$ because it can be factored
+to $(x^2+2)(x+2)$. There are many ways of testing a polynomial's
+irreducibility. One small quick test to check if it has linear factors is
+by plugging in 1, 2, 3 or 4. If it has roots, then it has linear factors
+and thus reducible. I'll spare the list of tests used in testing a
+polynomial's irreducibility because it's not the scope of this article.
+
+%but for our purpose, I'll use $ 3 + 4x^2 + x^3 $ as an example of an irreducible polynomial.
+
+One big question you may have now is how do we even compute the multiplicative inverse given a polynomial
+$p$? The answer is the Euclid's Division Lemma:
+
+\[ pq + r = d \]
+
+where $p$ is the divisor, $q$ is the quotient, $r$ is the remainder and $d$ is the dividend. If we
+substitute $d$ for our modulus irreducible polynomial, then $d$ becomes 0 since $d \mod d = 0$. Rearranging
+to find, $1/p$:
+
+\begin{align*}
+  pq +r &= 0 \\
+  r &= -pq \\
+  1 &= -pq/r \\
+  1/p &= -q/r \\
+  1/p &= q/(-r)
+\end{align*}
+
+This is a recursive function. To compute $1/p$, we compute the remainder $r$,
+of $d/p$ by long division, and as we go further down the recursive call, $r$ will
+get progressively become a constant polynomial (because $\textrm{deg}(r) < \textrm{deg}(p))$. If $r$ is non-zero, we have a solution and return the inverse according to the table in Table 3, if $r$ is zero, we don't have a solution (but that never
+happens with an irreducible polynomial because it has no factors).
+
+\begin{algorithmic}[1]
+  \State $I \gets (0, 1, 3, 2, 4)$
+  \Comment{Pre-initialized multiplicative inverses}
+  \Function{MultiplicativeInverse}{p}
+  \If{$p.\Call{Degree}{} == 0$}
+    \State \Return $I_{p_0}$ 
+    \Comment{Returns the multiplicative inverse of the 0th term in $p$}
+  \EndIf
+  \State $r \gets d \% p$
+  \State $q \gets d / p$
+  \State \Return $q\cdot \Call{MultiplicativeInverse}{-r}$
+  \EndFunction
+\end{algorithmic}
+
+\section{Linear feedback shift register as a PRNG}
+
+Consider the element 4. If you multiply 4 by itself mod 5, you get
+1. If you multiply 1 by 4, you get 4 again. So by multiplying 4
+again and again by itself, you can reach 2 elements, $\{1,4\}$. How about
+2?
+
+\begin{align*}
+  2^2 &= 4 \mod 5\\
+  2^3 &= 3 \mod 5 \\
+  2^4 &= 1 \mod 5 \\
+  2^5 &= 2 \mod 5 \\
+  2^6 &= 4 \mod 5 && \textrm{We're back again to the beginning}
+\end{align*}
+
+So the element 2 generated 4 elements, \{1, 2, 3, 4\}. How about
+3?
+
+\begin{align*}
+  3^2 &= 4 \mod 5 \\
+  3^3 &= 2 \mod 5 \\
+  3^4 &= 1 \mod 5 \\
+  3^5 &= 3 \mod 5 \\
+  3^6 &= 4 \mod 5 && \textrm{We're back again to the beginning}
+\end{align*}
+
+It also generated all elements except 0. If such element can generate
+all elements of our multiplicative group, $\{1, 2, 3, 4\}$, then we call that element a primitive element.
+Now, does such concept exists
+in our polynomial multiplication? where you can multiply a polynomial
+by itself again and again to reach all elements except 0? Yes there is.
+In fact, we can multiply the polynomial $x$ by itself again and again
+to reach all non zero elements by choosing a primitive polynomial as the
+modulus in our field. Here we'll keep things simple with 25 elements then represent them as degree
+1 polynonials $q_1 + q_2x, q_n \in \mathrm{F}_5$. Let's start multiplying: 
+
+\begin{align*}
+  x &= 0 + 1x && \textrm{$x$ is just $x$} \\
+  x^2 &= 0 + 0x + x^2 && \textrm{Oops, our polynomial is now a 2nd degree.}
+\end{align*}
+
+Now we run into a bit of problem, we have to reduce it with a primitive polynomial
+to make sure we satisfy our properties of Closure. I've choosen, $3 + 3x + x^2$ as an example of a primitive polynomial and if we take the remainder
+of $x^2/(3 + 3x + x^2)$ we get, $2 + 2x$.  That means, $x^2 = 2 + 2x$.  Notice that if you rearrange the equation so that the right side becomes 0, you get, $3 + 3x + x^2 = 0$. Continuing
+for $x^3$ and $x^4$:
+
+\begin{align*}
+  x^3 &= 2x + 2x^2 = 2x + 2(2 +2x) \rightarrow 4 + 1x \\
+  x^4 &= 4x + 1x^2 = 4x + 1(2 +2x) \rightarrow 2 + 1x
+\end{align*}
+
+And
+if we keep going, multiplying with $x$ and substituting the right side's $x^2$ with $2+2x$:
+
+\begin{align*}
+  x^{5} = 2 + 4x , x^{6} = 3 + 0x ,x^{7} = 0 + 3x ,x^{8} = 1 + 1x , \\
+  x^{9} = 2 + 3x , x^{10} = 1 + 3x ,x^{11} = 1 + 2x ,x^{12} = 4 + 0x ,\\
+  x^{13} = 0 + 4x, x^{14} = 3 + 3x ,x^{15} = 1 + 4x ,x^{16} = 3 + 4x ,\\
+  x^{17} = 3 + 1x , x^{18} = 2 + 0x ,x^{19} = 0 + 2x ,x^{20} = 4 + 4x ,\\
+  x^{21} = 3 + 2x , x^{22} = 4 + 2x ,x^{23} = 4 + 3x ,x^{24} = 1 + 0x ,\\
+  x^{25} = 0 + 1x
+\end{align*}
+
+we can reach all possible permutation of $q_0 + q_1 x, \in F_5$ (except 0 that is). If we
+used 126 quins, we'll be able to create a pseudorandom number generator
+that has a tremendously long period. This PRNG is very insecure but it
+suffices as a very basic toy stream cipher.
+
+%\begin{align*}
+%x ^{126}+ x ^{125}+ x ^{124}+ 3 x ^{123}+ 3 x ^{122}+ 4 x ^{121}+ 3 x ^{120}+ \\
+%4 x ^{119}+ 2 x ^{118}+ 2 x ^{117}+ 4 x ^{115}+ 2 x ^{114}+ 2 x ^{113}+ 4 x ^{112}+ \\
+%  3 x ^{110}+ 4 x ^{109}+ 2 x ^{108}+ x ^{107}+ 4 x ^{106}+ 3 x ^{105}+ x ^{104}+ \\
+%  2 x ^{103}+ 2 x ^{102}+ x ^{101}+ 2 x ^{100}+ 3 x ^{99}+ 4 x ^{98}+ 3 x ^{97}+ \\
+%  3 x ^{96}+ x ^{95}+ 3 x ^{94}+ 4 x ^{92}+ 3 x ^{91}+ 2 x ^{90}+ x ^{89}+ 2 x ^{88}+ \\
+%  x ^{87}+ x ^{85}+ 4 x ^{82}+ 2 x ^{81}+ 3 x ^{80}+ 4 x ^{77}+ 4 x ^{74}+ 2 x ^{73}+\\
+%  4 x ^{72}+ 3 x ^{71}+ 4 x ^{69}+ 2 x ^{67}+ x ^{65}+ 2 x ^{64}+ 3 x ^{63}+ \\
+%  3 x ^{62}+ x ^{61}+ 4 x ^{60}+ 3 x ^{59}+ x ^{58}+ x ^{57}+ x ^{56}+ 2 x ^{55}+\\
+%  2 x ^{54}+ 2 x ^{52}+ x ^{51}+ 2 x ^{50}+ 4 x ^{49}+ 3 x ^{47}+ 3 x ^{46}+ 2 x ^{42}+\\
+%  x ^{40}+ 3 x ^{39}+ 4 x ^{38}+ x ^{37}+ 3 x ^{34}+ 3 x ^{33}+ 3 x ^{32}+ 2 x ^{31}+\\
+%  3 x ^{29}+ 2 x ^{28}+ x ^{27}+ 2 x ^{26}+ 4 x ^{25}+ 3 x ^{24}+ 3 x ^{23}+ 3 x ^{22}+\\
+%  3 x ^{21}+ x ^{20}+ x ^{19}+ 4 x ^{18}+ 3 x ^{17}+ 3 x ^{16}+ 2 x ^{15}+ 3 x ^{14}+\\
+%  3 x ^{13}+ 2 x ^{12}+ 2 x ^{11}+ x ^{10}+ 2 x ^{7}+ x ^{6}+ 2 x ^{5}+ x ^{4}+ x ^{3}+\\
+%  x ^{2}+ 3 x+ 3
+%\end{align*}
+
+%as the primitive polynomial.
+
+\section{A toy quinary SPN cipher (TQC-135)}
+
+So far, our addition based cipher is very primitive compared to the modern
+ciphers we used today\footnote{I say modern, but AES which we use today
+was create more than a decade ago, so might a bit misleading there.}.
+More importantly it lacks Shannon's property of Diffusion where the 
+statistical properties of the plaintext is spread over the ciphertext
+(so a single quin change in the plaintext would change all the quins in
+the ciphertext).
+
+To address this, we'll be creating a very basic abstracted Substitution Permutation Network
+based cipher. On SPNs, there are round functions, $R(m)$, which on its
+own does not provide much good security for encrypting messages, but when
+composed several N-times, $R(R(R(R(R(m)))))$, and introducing a RoundKey\footnote{RoundKeys
+are generated from a Key Scheduler which takes in a Master Key and produces various keys
+from it.}
+for each every round, provides good confusion and diffusion properties. Although
+what we're designing was an inspiration was from AES, much of the design
+was scrapped for implementation convenience.
+
+Now we have to set conditions for choosing the size of
+our block cipher. Here are the list I've prepared:
+
+\begin{enumerate}
+
+\item The block cipher size must be a multiple of 3 and 5 so whole characters
+can be encrypted without truncation and all 5 elements can appear to reduce bias.
+
+\item The block cipher size divided by $\cdot 5$ must be a perfect square (for
+it to be used in a square matrix).
+
+\item The block cipher size must provide the same key and message space
+as 256 bits or more.
+
+\end{enumerate}
+
+The solution for the first two conditions are of the form, $3\cdot 5k^2$ for some integer $k$. Here
+are the lists for the number of bits we get with $3\cdot 5k^2$ as the quin size.
+
+
+\begin{enumerate}
+\item $k=1, 3\cdot 5(1)^1\log_2(5) \approx 34.82$
+\item $k=2, 3\cdot 5(2)^2\log_2(5) \approx 139.31$
+\item $k=3, 3\cdot 5(3)^2\log_2(5) \approx 313.46$
+\end{enumerate}
+
+So by choosing $3\cdot 5(3)^2 = 135$ as our block size, we get about 313.46
+bits of key/message space, which is more than enough.
+
+\subsection{State}
+
+The state is a 3 by 3 matrix with each cells containing 15 quins, achieving
+the 135 quins which the cipher operates on:
+
+\[
+\textrm{State} := 
+\begin{bmatrix}
+q_0 & q_1 & q_2 \\
+q_3 & q_4 & q_5 \\
+q_6 & q_7 & q_8
+\end{bmatrix}
+\]
+
+where $q_n \in F_5[x]/\langle d \rangle,\mathrm{deg}(d) = 15$ (the field
+which contains $5^{15}$ elements with $d$ as the modulus irreducible
+polymomial.)
+
+
+\subsection{Add Round Key}
+
+\textbf{Inputs:} 135 quins state and 135 quins round key.
+
+\noindent \textbf{Output:} 135 quins state.
+
+\medskip
+
+If:
+
+\[
+\textrm{State} := 
+\begin{bmatrix}
+q_0 & q_1 & q_2 \\
+q_3 & q_4 & q_5 \\
+q_6 & q_7 & q_8
+\end{bmatrix}
+\]
+
+and
+
+\[
+\textrm{RoundKey} := 
+\begin{bmatrix}
+k_0 & k_1 & k_2 \\
+k_3 & k_4 & k_5 \\
+k_6 & k_7 & k_8
+\end{bmatrix}
+\]
+
+
+then,
+
+\[
+\textrm{\textbf{AddRoundKey}(State,RoundKey)} =
+\begin{bmatrix}
+q_0 + k_0 & q_1 + k_1 & q_2 + k_2 \\
+q_3 + k_3 & q_4 + k_4 & q_5 + k_5 \\
+q_6 + k_6 & q_7 + k_7 & q_8 + k_8
+\end{bmatrix}
+\]
+
+where addition of $q_n+k_n$ is performed over $F_{5^{15}}$.
+
+\subsection{Substitute Columns}
+
+\textbf{Inputs:} 135 quins state.
+
+\noindent \textbf{Output:} 135 quins state.
+
+\medskip
+
+To propagate diffusion between rows, each of the 3 columns in the matrix
+are treated as element in $F_{5^{45}}$. If $c_n$ is the nth column,
+then it's substituted with $S(c_n)$ such that:
+
+\[ S(c) = \begin{cases}
+\gamma & c = 0\\
+\gamma + 1/c & c\neq 0
+\end{cases}
+\],
+
+where $\gamma$ is chosen so that $S(c)$ has no fixed point, i.e, $S(c) \neq c$ and no
+opposite fixed point, i.e, $S(-c) \neq c$. The Sbox $S(c)$ must also provide
+non-linearity, i.e, $S(a + b) \neq S(a) + S(b)$.
+
+If
+
+\[
+\textrm{State} = 
+\begin{bmatrix}
+c_0 & c_1 & c_2
+\end{bmatrix},
+\]
+
+then
+
+\[
+\textrm{\textbf{SubstituteColumns}(State)} =
+\begin{bmatrix}
+S(c_0) & S(c_1) & S(c_2)
+\end{bmatrix},
+\]
+
+\subsection{Shift Rows}
+
+\textbf{Inputs:} 135 quin State.
+
+\noindent \textbf{Output:} 135 quins State.
+
+\medskip
+
+To propagate diffusion between columns, each rows are circularly
+shifted to the left. The 0th row shifted by 0, the 1st is shifted by 1,
+and the 2nd is shifted by 2.
+
+If:
+
+\[
+\textrm{State} := 
+\begin{bmatrix}
+k_0 & k_1 & k_2 \\
+k_3 & k_4 & k_5 \\
+k_6 & k_7 & k_8
+\end{bmatrix},
+\]
+
+then
+
+\[
+\textrm{\textbf{ShiftRows}(State)} =
+\begin{bmatrix}
+k_0 & k_1 & k_2 \\
+k_4 & k_5 & k_3 \\
+k_8 & k_6 & k_7
+\end{bmatrix},
+\]
+
+\subsection{Round Function}
+
+\textbf{Inputs:} 135 quins State and 135 quins Key
+
+\noindent \textbf{Output:} 135 quins State.
+
+\[
+  \textrm{\textbf{RoundFunction}(State, Key)} = \textrm{\textbf{SR}(\textbf{SC}(\textbf{ARK}(State, Key)))}
+\]
+
+where \textbf{SR}, \textbf{SC}, \textbf{ARK}, corresponds to \textbf{ShiftRows}, \textbf{SubstituteColumns}, and \textbf{AddRoundKey} respectively.
+
+\subsection{The TQC-135 cipher}
+
+An N-round TQC, consist of N RoundFunctions followed by a \textbf{ARK}, \textbf{SC} and \textbf{ARK},
+with RoundKeys generated from a Key Scheduler.
+
+\subsection{
+
+\appendix
+
+\section{GSM 3-Quin default character set}
+
+\label{a1}
+
+This table defines the codepoints in quinary for the 125 characters of this
+SMS quinary cipher. This character set is a subset of the GSM 7-bit default
+character set defined in 3GPP TS 23.038.
+
+The quinaries are ordered this way in little endian to make it easier to parse the
+quinaries left to right.
+
+\begin{longtable}{|l|l|c|c|l|l|c|c|l|l|c|}
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  Dec & Quin & Char & & Dec & Quin& Char& & Dec& Quin& Char\\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  0 & 000 & @ & & 42 & 231 & * & & 84 & 413 & T \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  1 & 100 & £ & & 43 & 331 & + & & 85 & 023 & U \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  2 & 200 & \$ & & 44 & 431 & , & & 86 & 123 & V \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  3 & 300 & ¥ & & 45 & 041 & - & & 87 & 223 & W \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  4 & 400 & è & & 46 & 141 & . & & 88 & 323 & X \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  5 & 010 & é & & 47 & 241 & / & & 89 & 423 & Y \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  6 & 110 & ù & & 48 & 341 & 0 & & 90 & 033 & Z \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  7 & 210 & ì & & 49 & 441 & 1 & & 91 & 133 & Ä \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  8 & 310 & ò & & 50 & 002 & 2 & & 92 & 233 & Ö \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  9 & 410 & Ç & & 51 & 102 & 3 & & 93 & 333 & Ñ \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  10 & 020 & ñ & & 52 & 202 & 4 & & 94 & 433 & Ü \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  11 & 120 & Ø & & 53 & 302 & 5 & & 95 & 043 & § \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  12 & 220 & ø & & 54 & 402 & 6 & & 96 & 143 & ¿ \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  13 & 320 & ü & & 55 & 012 & 7 & & 97 & 243 & a \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  14 & 420 & Å & & 56 & 112 & 8 & & 98 & 343 & b \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  15 & 030 & å & & 57 & 212 & 9 & & 99 & 443 & c \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  16 & 130 & $\Delta$ & & 58 & 312 & : & & 100 &004 & d \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  17 & 230 & \_ & & 59 & 412 & ; & & 101 & 104 & e \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  18 & 330 & $\Phi$ & & 60 & 022 & < & & 102 & 204 & f \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  19 & 430 & $\Gamma$ & & 61 & 122 & =  & & 103 & 304 & g \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  20 & 040 & $\Lambda$ & & 62 & 222 & > & & 104 & 404 & h \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  21 & 140 & $\Omega$ & & 63 & 322 & ? & & 105 & 014 & i \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  22 & 240 & $\Pi$ & & 64 & 422 & ¡ & & 106 & 114 & j \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  23 & 340 & $\Psi$ & & 65 & 032 & A & & 107 & 214 & k \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  24 & 440 & $\Sigma$ & & 66 & 132 & B & & 108 & 314 & l \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  25 & 001 & $\Theta$ & & 67 & 232 & C & & 109 & 414 & m \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  26 & 101 & $\Xi$ & & 68 & 332 & D & & 110 & 024 & n \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  27 & 201 & à & & 69 & 432 & E & & 111 & 124 & o \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  28 & 301 & Æ & & 70 & 042 & F & & 112 & 224  & p \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  29 & 401 & æ & & 71 & 142 & G & & 113 & 324 & q \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  30 & 011 & ß & & 72 & 242 & H & & 114 & 424 & r \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  31 & 111 & É & & 73 & 342 & I & & 115 & 034 & s \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  32 & 211 & \verb+SP+ & & 74 & 442 & J & & 116 & 134 & t \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  33 & 311 & ! & & 75 & 003 & K & & 117 & 234 & u \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  34 & 411 & " & & 76 & 103 & L & & 118 & 334 & v \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  35 & 021 & \# & & 77 & 203 & M & & 119 & 434 & w \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  36 & 121 & ¤ & & 78 & 303 & N & & 120 & 044 & x \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  37 & 221 & \% & & 79 & 403 & O & & 121 & 144 & y \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  38 & 321 & \& & & 80 & 013 & P & & 122 & 244 & z \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  39 & 421 & \textquotesingle & & 81 & 113 & Q & & 123 & 344 & ä \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  40 & 031 & ( & & 82 & 213 & R & & 124 & 444 & ö \\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+  41 & 131 & )  & & 83 & 313 & S & & 125 & \cellcolor{black!25}& \cellcolor{black!25}\\
+  \cline{1-3}
+  \cline{5-7}
+  \cline{9-11}
+\end{longtable}%
+\medskip
+
+\begin{itemize}
+\item Dec -- Decimal representation
+\item Quin -- Quinary representation
+\item Char -- Character representation
+\end{itemize}
+%
+%
+\medskip
+
+\medskip \textbf{NOTE} Grey cells are unused.
+
+%\include{arithmetic.tex}
+\section*{Postface}
+
+So far, this is all purely theoretical. Yes, I managed to send and
+receive messages using these techniques and verified that my phone and
+network does not replace sequences of whitespaces to a single one and
+they did supported the 125 characters, but I have yet to test these on
+other countries with different carriers. If it did work, yey! Let me know!
+
+But would it really be worth to design a whole new secure cryptographic
+quinary cipher just for the purpose of SMS encryption only? Probably,
+no, but atleast it has satisfied me.
+
+Directly from the tropics, over $30^\circ$C.
+
+\section*{Acknowledgement}
+
+
+I thank whole-heartedly Sean Erik O'Connor and the contributors for their work in the Primpoly software which helped accelerate the finding
+of primitive polynomials for use in this article.
+
+\end{document}
