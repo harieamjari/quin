@@ -39,6 +39,7 @@
 
 \title{A quinary cipher for SMS encryption}
 \author{\href{https://github.com/harieamjari}{Al-buharie}}
+\date{October 20, 2025}
 
 
 \begin{document}
@@ -520,16 +521,16 @@ was create more than a decade ago, so might a bit misleading there.}.
 More importantly it lacks Shannon's property of Diffusion where the 
 statistical properties of the plaintext is spread over the ciphertext
 (so a single quin change in the plaintext would change all the quins in
-the ciphertext).
+the ciphertext). We can achieve this property by creating a very basic
+Substitution Permutation Network.
 
-To address this, we'll be creating a very basic abstracted Substitution Permutation Network
-based cipher. On SPNs, there are round functions, $R(m)$, which on its
-own does not provide much good security for encrypting messages, but when
-composed several N-times, $R(R(R(R(R(m)))))$, and introducing a RoundKey\footnote{RoundKeys
-are generated from a Key Scheduler which takes in a Master Key and produces various keys
-from it.}
-for each every round, provides good confusion and diffusion properties. Although
-what we're designing was an inspiration was from AES, much of the design
+On SPNs, there are round functions, $R(m)$, which on its own does
+not provide much good security for encrypting messages, but when
+composed several N-times, $R(R(R(R(R(m)))))$, and introducing a
+RoundKey\footnote{RoundKeys are generated from a Key Scheduler which
+takes in a Master Key and produces various keys from it.} for each every
+round, provides good confusion and diffusion properties. Although it's
+architecture was an inspiration from AES, much of the original design
 was scrapped for implementation convenience.
 
 Now we have to set conditions for choosing the size of
@@ -717,7 +718,7 @@ with RoundKeys generated from a Key Scheduler.
 
 \subsection{Reference implementation in C}
 
-\url{https://github.com/harieamjari/quin/blob/master/quin.tex}
+\url{https://github.com/harieamjari/quin/blob/master/quin.c}
 
 \appendix
 
