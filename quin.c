@@ -13,9 +13,7 @@
 #include <string.h>
 #include <assert.h>
 
-#ifndef NO_WCHAR
 #include <wchar.h>
-#endif
 
 #define T int16_t
 #define P 5
@@ -32,7 +30,6 @@
              3, 1, 4, 0, 2, 4, 2, 0, 1, 4, 2, 1, 0, 2, 1, 2,                   \
              1, 2, 1, 4, 0, 1, 3, 1, 2, 2, 1, 0, 1, 1}
 
-#ifndef NO_WCHAR
 wchar_t *gsm_3quin[125] = {
     L"@", L"£", L"$", L"¥", L"è", L"é", L"ù",  L"ì", L"ò", L"Ç", L"ñ", L"Ø", L"ø", L"ü",
     L"Å", L"å", L"Δ", L"_", L"Φ", L"Γ", L"Λ",  L"Ω", L"Π", L"Ψ", L"Σ", L"Θ", L"Ξ", L"à",
@@ -43,7 +40,21 @@ wchar_t *gsm_3quin[125] = {
     L"T", L"U", L"V", L"W", L"X", L"Y", L"Z",  L"Ä", L"Ö", L"Ñ", L"Ü", L"§", L"¿", L"a",
     L"b", L"c", L"d", L"e", L"f", L"g", L"h",  L"i", L"j", L"k", L"l", L"m", L"n", L"o",
     L"p", L"q", L"r", L"s", L"t", L"u", L"v",  L"w", L"x", L"y", L"z", L"ä", L"ö"};
-#endif
+uint16_t gsm_utf8[125] = {
+    0x40,   0xc2a3, 0x24,   0xc2a5, 0xc3a8, 0xc3a9, 0xc3b9, 0xc3ac, 0xc3b2,
+    0xc387, 0xc3b1, 0xc398, 0xc3b8, 0xc3bc, 0xc385, 0xc3a5, 0xce94, 0x5f,
+    0xcea6, 0xce93, 0xce9b, 0xcea9, 0xcea0, 0xcea8, 0xcea3, 0xce98, 0xce9e,
+    0xc3a0, 0xc386, 0xc3a6, 0xc39f, 0xc389, 0x20,   0x21,   0x22,   0x23,
+    0xc2a4, 0x25,   0x26,   0x27,   0x28,   0x29,   0x2a,   0x2b,   0x2c,
+    0x2d,   0x2e,   0x2f,   0x30,   0x31,   0x32,   0x33,   0x34,   0x35,
+    0x36,   0x37,   0x38,   0x39,   0x3a,   0x3b,   0x3c,   0x3d,   0x3e,
+    0x3f,   0xc2a1, 0x41,   0x42,   0x43,   0x44,   0x45,   0x46,   0x47,
+    0x48,   0x49,   0x4a,   0x4b,   0x4c,   0x4d,   0x4e,   0x4f,   0x50,
+    0x51,   0x52,   0x53,   0x54,   0x55,   0x56,   0x57,   0x58,   0x59,
+    0x5a,   0xc384, 0xc396, 0xc391, 0xc39c, 0xc2a7, 0xc2bf, 0x61,   0x62,
+    0x63,   0x64,   0x65,   0x66,   0x67,   0x68,   0x69,   0x6a,   0x6b,
+    0x6c,   0x6d,   0x6e,   0x6f,   0x70,   0x71,   0x72,   0x73,   0x74,
+    0x75,   0x76,   0x77,   0x78,   0x79,   0x7a,   0xc3a4, 0xc3b6};
 
 int degree(T *p, int n) {
   for (int i = 1; i < n+1; i++)
@@ -129,7 +140,7 @@ void multiplicative_inverse(T dst[N], T p[N]) {
     dst[0] = minv[p[0]];
     return;
   }
-  /* 1/p = 1/(-r) */
+  /* 1/p = q/(-r) */
   T p_[2*N] = {0}, r_[2*N] = {0}, q_[2*N] = {0};
   memcpy(p_, p, sizeof(T)*N);
   long_division(p_, q_, r_, MODULUS_POLYNOMIAL);
@@ -309,7 +320,9 @@ void next_key(T d[BLOCK_SIZE], T s[BLOCK_SIZE]) {
 
   T k[BLOCK_SIZE] = {0};
   memcpy(k, s, sizeof(T)*BLOCK_SIZE);
-  for (int i = 0; i < 135; i++) {
+  for (int i = 0; i < 10; i++) {
+    shift_rows(k);
+    substitute_columns(k);
     T v = k[BLOCK_SIZE - 1];
     for (int i = 0; i < BLOCK_SIZE-1; i++) {
       k[i + 1] = k[i];
@@ -363,26 +376,77 @@ void tqc_decrypt(T dst[BLOCK_SIZE], T m[BLOCK_SIZE], T k[BLOCK_SIZE], int rounds
   memcpy(dst, s, sizeof(T)*BLOCK_SIZE);
 }
 
+int sizeof_utf8char(char p) {
+  if ((p >> 5) == 6)
+    return 2;
+  if ((p >> 7) == 0)
+    return 1;
+  return 0;
+}
 
-int main() {
+void int_to_quin(T d[3], int i) {
+  d[0] = i % 5;
+  i /= 5;
+  d[1] = i % 5;
+  i /= 5;
+  d[2] = i % 5;
+}
+
+int utf8_to_quins(T d[BLOCK_SIZE], char *str) {
+  int i = 0;
+  int s;
+  while (*str && (s = sizeof_utf8char(*str))  && i < BLOCK_SIZE) {
+    uint16_t c = s == 1 ? *str : ((uint16_t)*(str) << 8) | *(str + 1);
+    for (int j = 0; j < 125; j++) {
+      if (c == gsm_utf8[j]) {
+        int_to_quin(d + i, j);
+        i += 3;
+        break;
+      } else if ( j == 124) {
+        //printf("%c\n",(char)(c&0xff));
+        return 1;
+      }
+    }
+    str += s;
+  }
+  return 0;
+}
+
+int main(int argc, char *argv[]) {
 //  T p[N] = {0, 1, 0, 3, 1, 2, 4};
 //  for (int i = 0; i < 300; i++){ 
 //    multiply(p, p, (T[N]){0, 1});
 //    print_qchar(p, N);
 //  }
+  if (argc != 4) {
+    printf("usage: %s [e|d] message key\n", argv[0]);
+    return 0;
+  }
+
 
   /* message */
-  T m[BLOCK_SIZE] = {3, 0, 2, 1, 4, 2, 2};
+  T m[BLOCK_SIZE] = {0};
   /* key */
-  T k[BLOCK_SIZE] = {1, 0, 2, 3, 4, 4, 0, 2, 1, 1, 3, 2, 4, 0, 1, 0, 3, 0, 0};
+  T k[BLOCK_SIZE] = {0};
 
+  if (utf8_to_quins(m, argv[2])) {
+    printf("invalid message characters\n");
+    return 1;
+  }
+
+  if (utf8_to_quins(k, argv[3])) {
+    printf("invalid key characters\n");
+    return 1;
+  }
+
+  if (argv[1][0] == 'e') {
+    tqc_encrypt(m, m, k, 5);
+  } else if (argv[1][0] == 'd') {
+    tqc_decrypt(m, m, k, 5);
+  }
 
   print_qchar(m, BLOCK_SIZE);
-  tqc_encrypt(m, m, k, 5);
-  print_qchar(m, BLOCK_SIZE);
 
-  tqc_decrypt(m, m, k, 5);
-  print_qchar(m, BLOCK_SIZE);
 
   return 0;
 }
