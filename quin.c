@@ -8,10 +8,15 @@
  */
 
 
+
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
+
+#ifndef NO_LOCALE
+#include <locale.h>
+#endif
 
 #include <wchar.h>
 
@@ -164,11 +169,9 @@ void printq(T *q, int n) {
 
 void print_qchar(T *b, int n) {
   printq(b, n);
-#ifndef NO_WCHAR
   printf("  ");
   for (int i = 0; i < n/3; i++)
     wprintf(L"%S", gsm_3quin[b[i*3] + b[i*3 + 1]*5 + b[i*3 + 2]*25]);
-#endif
   puts("");
 }
 
@@ -418,6 +421,9 @@ int main(int argc, char *argv[]) {
 //    multiply(p, p, (T[N]){0, 1});
 //    print_qchar(p, N);
 //  }
+#ifndef NO_LOCALE
+  setlocale(LC_ALL, "en_US.UTF-8");
+#endif
   if (argc != 4) {
     printf("usage: %s [e|d] message key\n", argv[0]);
     return 0;
